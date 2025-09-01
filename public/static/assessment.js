@@ -375,6 +375,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validate student information
         const studentName = formData.get('studentName')?.trim();
+        console.log('DEBUG: Student name collected:', studentName);
+        console.log('DEBUG: All form data:', Object.fromEntries(formData.entries()));
+        
         if (!studentName) {
             alert('Please enter your name to continue.');
             document.getElementById('studentName').focus();
@@ -811,10 +814,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
 
                     <div class="text-center space-y-4">
-                        <button id="closeModal" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
-                            <i class="fas fa-check mr-2"></i>
-                            Awesome, Got It!
-                        </button>
+                        <div class="space-x-4">
+                            <button id="viewSummary" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                                <i class="fas fa-trophy mr-2"></i>
+                                View My Summary
+                            </button>
+                            <button id="closeModal" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                                <i class="fas fa-check mr-2"></i>
+                                Got It!
+                            </button>
+                        </div>
                         <div>
                             <button id="takeAnother" class="text-gray-500 hover:text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
                                 <i class="fas fa-redo mr-2"></i>
@@ -838,6 +847,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
 
         // Modal event handlers with sound effects
+        document.getElementById('viewSummary').addEventListener('click', () => {
+            window.soundManager?.play('click');
+            if (results.assessmentId) {
+                window.location.href = `/summary/${results.assessmentId}`;
+            } else {
+                alert('Summary not available - assessment ID missing');
+            }
+        });
+
         document.getElementById('closeModal').addEventListener('click', () => {
             window.soundManager?.play('click');
             modal.style.opacity = '0';

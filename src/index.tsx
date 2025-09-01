@@ -133,7 +133,7 @@ app.get('/', (c) => {
                   name="school"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Enter your school name"
-                  defaultValue="BCS Saints"
+                  value="BCS Saints"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ app.post('/api/submit-assessment', async (c) => {
         VALUES (?, ?, ?, ?, ?)
       `).bind(
         assessmentId,
-        'mjackson@bcssaints.org',
+        'mjackson@bcssaints.org, forms@bcssaints.org',
         `Executive Skills Assessment Results - ${studentInfo.name}`,
         emailResult.success ? 'success' : 'error',
         emailResult.error || null
@@ -393,6 +393,172 @@ app.post('/api/submit-assessment', async (c) => {
   } catch (error) {
     console.error('Error submitting assessment:', error)
     return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Summary page showing high and low EF skills
+app.get('/summary/:id', async (c) => {
+  const assessmentId = c.req.param('id')
+  
+  try {
+    const { env } = c
+    if (!env.DB) {
+      throw new Error('Database not available')
+    }
+
+    const assessment = await env.DB.prepare(`
+      SELECT * FROM assessments WHERE id = ?
+    `).bind(assessmentId).first()
+
+    if (!assessment) {
+      return c.render(<div className="text-center py-16"><h1 className="text-2xl text-gray-600">Assessment not found</h1></div>)
+    }
+
+    // Parse stored analysis data
+    const strengths = JSON.parse(assessment.strength_areas || '[]')
+    const weaknesses = JSON.parse(assessment.weakness_areas || '[]')
+    
+    const categoryScores = {
+      'Response Inhibition': assessment.response_inhibition_score,
+      'Working Memory': assessment.working_memory_score,
+      'Emotional Control': assessment.emotional_control_score,
+      'Flexibility': assessment.flexibility_score,
+      'Sustained Attention': assessment.sustained_attention_score,
+      'Task Initiation': assessment.task_initiation_score,
+      'Planning/Prioritizing': assessment.planning_prioritizing_score,
+      'Organization': assessment.organization_score,
+      'Time Management': assessment.time_management_score,
+      'Goal-Directed Persistence': assessment.goal_directed_persistence_score,
+      'Metacognition': assessment.metacognition_score
+    }
+
+    return c.render(
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+              <i className="fas fa-trophy mr-3 text-yellow-500"></i>
+              Executive Skills Summary
+            </h1>
+            <p className="text-xl text-gray-600">
+              <strong>{assessment.student_name}</strong>
+            </p>
+            <p className="text-sm text-gray-500">
+              Assessment completed on {new Date(assessment.completed_at).toLocaleDateString()}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* High Performance Areas (Strengths) */}
+            <div className="bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl shadow-xl p-8 border border-green-200">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fas fa-star text-white text-2xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-green-800 mb-2">Your Superpowers! 🌟</h2>
+                <p className="text-green-700">Executive skills where you excel</p>
+              </div>
+              <div className="space-y-4">
+                {strengths.map((strength: string, index: number) => (
+                  <div key={index} className="bg-white bg-opacity-80 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-4 text-white font-bold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-green-800 text-lg">{executiveSkillLabels[strength as ExecutiveSkill] || strength}</h3>
+                        <p className="text-green-600 text-sm">Strong functional area</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Growth Opportunities (Areas to Develop) */}
+            <div className="bg-gradient-to-br from-orange-100 to-yellow-100 rounded-xl shadow-xl p-8 border border-orange-200">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fas fa-target text-white text-2xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold text-orange-800 mb-2">Growth Opportunities 🎯</h2>
+                <p className="text-orange-700">Areas to focus on for improvement</p>
+              </div>
+              <div className="space-y-4">
+                {weaknesses.map((weakness: string, index: number) => (
+                  <div key={index} className="bg-white bg-opacity-80 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center mr-4 text-white font-bold">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-orange-800 text-lg">{executiveSkillLabels[weakness as ExecutiveSkill] || weakness}</h3>
+                        <p className="text-orange-600 text-sm">Focus area for development</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Score Overview */}
+          <div className="bg-white rounded-xl shadow-xl p-8 mb-8">
+            <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+              <i className="fas fa-chart-bar mr-2 text-indigo-600"></i>
+              Quick Score Overview
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(categoryScores).map(([category, score]) => (
+                <div key={category} className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-gray-800 text-sm">{category}</span>
+                    <span className="font-bold text-lg text-indigo-600">{score}/21</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                      style={`width: ${(score / 21) * 100}%`}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {score <= 7 ? '🌟 Strong' : score <= 14 ? '⚡ Moderate' : '🎯 Focus Area'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center space-y-4">
+            <div className="bg-blue-50 rounded-lg p-6 mb-6">
+              <p className="text-blue-800">
+                <i className="fas fa-info-circle mr-2"></i>
+                <strong>Remember:</strong> Lower scores indicate areas of strength, while higher scores suggest areas that may benefit from additional support and strategies.
+              </p>
+            </div>
+            
+            <div className="space-x-4">
+              <a href={`/results/${assessmentId}`} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 inline-flex items-center">
+                <i className="fas fa-file-alt mr-2"></i>
+                View Full Report
+              </a>
+              <a href="/" className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 inline-flex items-center">
+                <i className="fas fa-home mr-2"></i>
+                Take New Assessment
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  } catch (error) {
+    console.error('Error loading summary:', error)
+    return c.render(
+      <div className="text-center py-16">
+        <h1 className="text-2xl text-gray-600">Error loading summary</h1>
+        <p className="text-gray-500 mt-2">Please try again later</p>
+      </div>
+    )
   }
 })
 

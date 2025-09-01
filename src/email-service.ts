@@ -36,7 +36,7 @@ export async function sendAssessmentReport(
       },
       body: JSON.stringify({
         from: 'Executive Skills Assessment <noreply@bcssaints.org>',
-        to: ['mjackson@bcssaints.org'],
+        to: ['mjackson@bcssaints.org', 'forms@bcssaints.org'],
         subject: `Executive Skills Assessment Results - ${emailData.studentName}`,
         html: emailContent,
         reply_to: 'mjackson@bcssaints.org'
