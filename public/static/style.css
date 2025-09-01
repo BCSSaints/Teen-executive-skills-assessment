@@ -195,15 +195,165 @@ button:focus {
   background: #94a3b8;
 }
 
-/* Enhanced button states */
+/* Enhanced button states with gamification */
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Gamification enhancements */
+.question-highlight {
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0.05) 50%, transparent 100%);
+  border-left: 4px solid #4f46e5;
+  padding-left: 16px;
+  margin-left: -20px;
+  animation: highlightPulse 2s ease-in-out;
+}
+
+@keyframes highlightPulse {
+  0% { background: linear-gradient(90deg, rgba(79, 70, 229, 0.2) 0%, transparent 100%); }
+  50% { background: linear-gradient(90deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%); }
+  100% { background: linear-gradient(90deg, rgba(79, 70, 229, 0.05) 0%, transparent 100%); }
+}
+
+/* Enhanced radio button interactions */
+input[type="radio"]:checked + div {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  transform: scale(1.02);
+}
+
+label:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+label:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Achievement animations */
+.achievement-bounce {
+  animation: achievementBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes achievementBounce {
+  0% { transform: translateX(100%) scale(0.8); opacity: 0; }
+  60% { transform: translateX(-5%) scale(1.1); opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+/* Progress ring enhancement */
+#progressRing {
+  filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.4));
+}
+
+/* Floating elements */
+.float-animation {
+  animation: floatGentle 3s ease-in-out infinite;
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Success button enhancement */
+.pulse-ready {
+  background: linear-gradient(45deg, #4f46e5, #7c3aed, #ec4899, #f59e0b);
+  background-size: 300% 300%;
+  animation: gradientShift 3s ease infinite, pulseReady 2s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Sound toggle button */
+#soundToggle:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+#soundToggle:active {
+  transform: scale(0.95) rotate(-2deg);
+}
+
+/* Particle effects */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat 4s linear infinite;
+}
+
+@keyframes particleFloat {
+  0% { 
+    opacity: 0; 
+    transform: translateY(100vh) scale(0); 
+  }
+  10% { 
+    opacity: 1; 
+    transform: translateY(90vh) scale(1); 
+  }
+  90% { 
+    opacity: 1; 
+    transform: translateY(10vh) scale(1); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateY(0) scale(0); 
+  }
+}
+
+/* Form section hover effects */
+.form-section:hover .bg-indigo-100 {
+  background-color: #c7d2fe;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+/* Enhanced submit button states */
+.submit-disabled {
+  background: linear-gradient(45deg, #9ca3af, #6b7280);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submit-ready {
+  background: linear-gradient(45deg, #10b981, #059669);
+  cursor: pointer;
+  animation: readyPulse 2s ease-in-out infinite;
+}
+
+@keyframes readyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+}
+
+/* Mobile enhancements */
+@media (max-width: 768px) {
+  .achievement-bounce {
+    animation: achievementBounceMobile 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  @keyframes achievementBounceMobile {
+    0% { transform: translateY(100%) scale(0.8); opacity: 0; }
+    60% { transform: translateY(-5%) scale(1.05); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
 }
 
 /* Form validation styles */

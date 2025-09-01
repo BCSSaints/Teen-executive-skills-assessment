@@ -215,6 +215,18 @@ app.get('/', (c) => {
         </div>
       </div>
 
+      {/* Gamification Elements */}
+      <div id="achievementContainer" className="fixed top-16 right-4 z-40 space-y-2"></div>
+      
+      {/* Floating particles background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-indigo-200 rounded-full opacity-50 animate-ping" style={{animationDelay: '0s'}}></div>
+        <div className="absolute top-3/4 right-1/4 w-3 h-3 bg-blue-200 rounded-full opacity-30 animate-ping" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-purple-200 rounded-full opacity-40 animate-ping" style={{animationDelay: '4s'}}></div>
+        <div className="absolute bottom-1/4 left-1/2 w-2 h-2 bg-pink-200 rounded-full opacity-35 animate-ping" style={{animationDelay: '6s'}}></div>
+      </div>
+      
+      <script src="/static/sounds.js"></script>
       <script src="/static/assessment.js"></script>
     </div>
   )
