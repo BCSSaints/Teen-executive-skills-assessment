@@ -378,9 +378,31 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Check if all questions are answered
-        if (answeredQuestions < totalQuestions) {
-            alert(`Please answer all ${totalQuestions} questions before submitting.`);
+        // Double-check that all questions are answered
+        const responses = {};
+        const missingQuestions = [];
+        
+        for (let i = 1; i <= 33; i++) {
+            const value = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+            if (value) {
+                responses[i] = parseInt(value);
+            } else {
+                missingQuestions.push(i);
+            }
+        }
+        
+        if (missingQuestions.length > 0) {
+            alert(`Please answer all questions before submitting. You still need to answer question(s): ${missingQuestions.join(', ')}`);
+            
+            // Scroll to first missing question
+            const firstMissing = document.querySelector(`input[name="q${missingQuestions[0]}"]`);
+            if (firstMissing) {
+                firstMissing.closest('.border-b').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                firstMissing.closest('.border-b').classList.add('question-highlight');
+            }
             return;
         }
 
@@ -409,13 +431,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 school: formData.get('school') || 'BCS Saints'
             };
 
-            const responses = {};
-            for (let i = 1; i <= 33; i++) {
-                const value = formData.get(`q${i}`);
-                if (value) {
-                    responses[i] = parseInt(value);
-                }
-            }
+            // Use the already-validated responses from above
+            // (responses object was already created during validation)
 
             // Submit to API
             const response = await axios.post('/api/submit-assessment', {
@@ -442,7 +459,22 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (error.response) {
                 // Server responded with error
-                errorMessage += `Server error: ${error.response.data.error || 'Unknown error'}`;
+                const serverError = error.response.data;
+                if (serverError.missingQuestions) {
+                    errorMessage += `Please complete question(s): ${serverError.missingQuestions.join(', ')}`;
+                    
+                    // Scroll to first missing question
+                    const firstMissing = document.querySelector(`input[name="q${serverError.missingQuestions[0]}"]`);
+                    if (firstMissing) {
+                        firstMissing.closest('.border-b').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        firstMissing.closest('.border-b').classList.add('question-highlight');
+                    }
+                } else {
+                    errorMessage += `Server error: ${serverError.error || 'Unknown error'}`;
+                }
             } else if (error.request) {
                 // Network error
                 errorMessage += 'Please check your internet connection and try again.';

@@ -239,8 +239,27 @@ app.post('/api/submit-assessment', async (c) => {
     const { studentInfo, responses } = body
     
     // Validate required fields
-    if (!studentInfo.name || !responses || Object.keys(responses).length !== 33) {
-      return c.json({ error: 'Missing required information' }, 400)
+    if (!studentInfo || !studentInfo.name || !studentInfo.name.trim()) {
+      return c.json({ error: 'Student name is required' }, 400)
+    }
+    
+    if (!responses || typeof responses !== 'object') {
+      return c.json({ error: 'Assessment responses are required' }, 400)
+    }
+    
+    // Check that all 33 questions have valid responses
+    const missingQuestions = []
+    for (let i = 1; i <= 33; i++) {
+      if (!responses[i] || responses[i] < 1 || responses[i] > 7) {
+        missingQuestions.push(i)
+      }
+    }
+    
+    if (missingQuestions.length > 0) {
+      return c.json({ 
+        error: `Please answer all questions. Missing responses for question(s): ${missingQuestions.join(', ')}`,
+        missingQuestions 
+      }, 400)
     }
 
     // Calculate category scores
