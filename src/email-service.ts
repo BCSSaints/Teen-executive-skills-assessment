@@ -35,7 +35,7 @@ export async function sendAssessmentReport(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Executive Skills Assessment <noreply@bcssaints.org>',
+        from: 'Executive Skills Assessment <onboarding@resend.dev>',
         to: ['mjackson@bcssaints.org', 'forms@bcssaints.org'],
         subject: `Executive Skills Assessment Results - ${emailData.studentName}`,
         html: emailContent,
@@ -49,10 +49,14 @@ export async function sendAssessmentReport(
       console.log('Email sent successfully:', result.id);
       return { success: true };
     } else {
-      console.error('Email send failed:', result);
+      console.error('Email send failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        result: result
+      });
       return { 
         success: false, 
-        error: result.message || 'Failed to send email' 
+        error: `HTTP ${response.status}: ${result.message || result.error || 'Failed to send email'}` 
       };
     }
   } catch (error) {

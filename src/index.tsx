@@ -402,6 +402,52 @@ app.post('/api/submit-assessment', async (c) => {
   }
 })
 
+// Email test endpoint for debugging
+app.get('/api/test-email', async (c) => {
+  try {
+    const { env } = c
+    
+    if (!env.RESEND_API_KEY) {
+      return c.json({ 
+        error: 'RESEND_API_KEY not configured',
+        configured: false 
+      })
+    }
+    
+    // Test the Resend API with a simple request
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Executive Skills Assessment <onboarding@resend.dev>',
+        to: ['mjackson@bcssaints.org'],
+        subject: 'Email Service Test - Executive Skills Assessment',
+        html: '<h1>Test Email</h1><p>This is a test to verify email delivery is working.</p>'
+      })
+    })
+    
+    const result = await response.json()
+    
+    return c.json({
+      success: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      result: result,
+      apiKeyConfigured: true,
+      apiKeyLength: env.RESEND_API_KEY.length
+    })
+    
+  } catch (error) {
+    return c.json({
+      error: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      configured: true
+    })
+  }
+})
+
 // Summary page showing high and low EF skills
 app.get('/summary/:id', async (c) => {
   const assessmentId = c.req.param('id')
