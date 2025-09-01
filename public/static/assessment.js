@@ -370,8 +370,11 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Collect and validate form data
+        const formData = new FormData(form);
+        
         // Validate student information
-        const studentName = document.getElementById('studentName').value.trim();
+        const studentName = formData.get('studentName')?.trim();
         if (!studentName) {
             alert('Please enter your name to continue.');
             document.getElementById('studentName').focus();
@@ -421,9 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.soundManager?.play('whoosh');
 
         try {
-            // Collect form data
-            const formData = new FormData(form);
-            
+            // Prepare student info (formData already collected above)
             const studentInfo = {
                 name: formData.get('studentName'),
                 email: formData.get('studentEmail') || '',
@@ -433,6 +434,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Use the already-validated responses from above
             // (responses object was already created during validation)
+
+            // Debug: Log what we're sending
+            console.log('Submitting assessment:', { studentInfo, responses });
+            console.log('Student name:', studentInfo.name);
+            console.log('Number of responses:', Object.keys(responses).length);
 
             // Submit to API
             const response = await axios.post('/api/submit-assessment', {

@@ -70,75 +70,74 @@ app.get('/', (c) => {
           </p>
         </div>
 
-        {/* Student Information Form */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            <i className="fas fa-user mr-2 text-indigo-600"></i>
-            Student Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label for="studentName" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input 
-                type="text" 
-                id="studentName" 
-                name="studentName"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your full name"
-              />
-            </div>
-            <div>
-              <label for="studentEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                Email (Optional)
-              </label>
-              <input 
-                type="email" 
-                id="studentEmail" 
-                name="studentEmail"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div>
-              <label for="gradeLevel" className="block text-sm font-medium text-gray-700 mb-2">
-                Grade Level
-              </label>
-              <select 
-                id="gradeLevel" 
-                name="gradeLevel"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Select grade level</option>
-                <option value="6th">6th Grade</option>
-                <option value="7th">7th Grade</option>
-                <option value="8th">8th Grade</option>
-                <option value="9th">9th Grade</option>
-                <option value="10th">10th Grade</option>
-                <option value="11th">11th Grade</option>
-                <option value="12th">12th Grade</option>
-              </select>
-            </div>
-            <div>
-              <label for="school" className="block text-sm font-medium text-gray-700 mb-2">
-                School
-              </label>
-              <input 
-                type="text" 
-                id="school" 
-                name="school"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your school name"
-                value="BCS Saints"
-              />
+        {/* Assessment Form - Including Student Information */}
+        <form id="assessmentForm" className="space-y-6">
+          {/* Student Information Section */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              <i className="fas fa-user mr-2 text-indigo-600"></i>
+              Student Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="studentName" 
+                  name="studentName"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter your full name"
+                />
+              </div>
+              <div>
+                <label htmlFor="studentEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email (Optional)
+                </label>
+                <input 
+                  type="email" 
+                  id="studentEmail" 
+                  name="studentEmail"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter your email"
+                />
+              </div>
+              <div>
+                <label htmlFor="gradeLevel" className="block text-sm font-medium text-gray-700 mb-2">
+                  Grade Level
+                </label>
+                <select 
+                  id="gradeLevel" 
+                  name="gradeLevel"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="">Select grade level</option>
+                  <option value="6th">6th Grade</option>
+                  <option value="7th">7th Grade</option>
+                  <option value="8th">8th Grade</option>
+                  <option value="9th">9th Grade</option>
+                  <option value="10th">10th Grade</option>
+                  <option value="11th">11th Grade</option>
+                  <option value="12th">12th Grade</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="school" className="block text-sm font-medium text-gray-700 mb-2">
+                  School
+                </label>
+                <input 
+                  type="text" 
+                  id="school" 
+                  name="school"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Enter your school name"
+                  defaultValue="BCS Saints"
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Assessment Form */}
-        <form id="assessmentForm" className="space-y-6">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">
               <i className="fas fa-tasks mr-2 text-indigo-600"></i>
@@ -238,9 +237,21 @@ app.post('/api/submit-assessment', async (c) => {
     const body = await c.req.json()
     const { studentInfo, responses } = body
     
+    // Debug logging
+    console.log('Received submission:', { 
+      hasStudentInfo: !!studentInfo, 
+      studentName: studentInfo?.name,
+      hasResponses: !!responses,
+      responseCount: responses ? Object.keys(responses).length : 0 
+    })
+    
     // Validate required fields
     if (!studentInfo || !studentInfo.name || !studentInfo.name.trim()) {
-      return c.json({ error: 'Student name is required' }, 400)
+      console.log('Validation failed: Missing student name', { studentInfo })
+      return c.json({ 
+        error: 'Student name is required',
+        debug: { receivedStudentInfo: studentInfo }
+      }, 400)
     }
     
     if (!responses || typeof responses !== 'object') {
