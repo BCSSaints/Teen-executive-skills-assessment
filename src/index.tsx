@@ -356,6 +356,11 @@ app.post('/api/submit-assessment', async (c) => {
       completedAt: currentTime
     }
 
+    console.log('Email service configuration:', { 
+      hasApiKey: !!env.RESEND_API_KEY, 
+      apiKeyLength: env.RESEND_API_KEY?.length || 0 
+    })
+    
     const emailResult = await sendAssessmentReport(emailData, env.RESEND_API_KEY)
     
     // Log email attempt
@@ -388,7 +393,8 @@ app.post('/api/submit-assessment', async (c) => {
       },
       assessmentId,
       emailSent: emailResult.success,
-      emailError: emailResult.error
+      emailError: emailResult.error,
+      emailConfigured: !!env.RESEND_API_KEY
     })
   } catch (error) {
     console.error('Error submitting assessment:', error)

@@ -455,8 +455,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.data.success) {
-                // Show success message and results
-                showResults(response.data.results);
+                // Show success message and results - pass the full response data
+                showResults(response.data);
             } else {
                 throw new Error(response.data.error || 'Submission failed');
             }
@@ -719,7 +719,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Enhanced results modal with animations
-    function showResults(results) {
+    function showResults(data) {
+        // Extract data from the response structure
+        const results = data.results;
+        const assessmentId = data.assessmentId;
+        
+        console.log('ShowResults called with:', { results, assessmentId });
+        
         // Remove loading overlay first
         const loadingOverlay = document.getElementById('loadingOverlay');
         if (loadingOverlay) {
@@ -802,14 +808,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-envelope text-white"></i>
                             </div>
                             <div>
-                                <div class="font-bold text-blue-800 text-lg">Report Delivered! 📧</div>
-                                <div class="text-blue-700">Your detailed results have been sent</div>
+                                <div class="font-bold text-blue-800 text-lg">
+                                    ${data.emailSent ? 'Report Delivered! 📧' : 'Results Saved! 💾'}
+                                </div>
+                                <div class="text-blue-700">
+                                    ${data.emailSent ? 'Your detailed results have been sent' : 'Your results are safely stored'}
+                                </div>
                             </div>
                         </div>
                         <p class="text-blue-700 text-sm">
-                            A comprehensive report with personalized recommendations has been emailed to 
-                            <strong class="bg-blue-100 px-2 py-1 rounded">mjackson@bcssaints.org</strong> 
-                            for review and follow-up support.
+                            ${data.emailSent 
+                                ? 'A comprehensive report has been emailed to <strong class="bg-blue-100 px-2 py-1 rounded">mjackson@bcssaints.org & forms@bcssaints.org</strong> for review.'
+                                : data.emailConfigured 
+                                    ? 'Email service encountered an issue, but your results are saved and can be accessed via the summary page.'
+                                    : 'Email service is not yet configured. Your results are saved and accessible via the summary page below.'
+                            }
                         </p>
                     </div>
 
@@ -849,10 +862,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Modal event handlers with sound effects
         document.getElementById('viewSummary').addEventListener('click', () => {
             window.soundManager?.play('click');
-            if (results.assessmentId) {
-                window.location.href = `/summary/${results.assessmentId}`;
+            console.log('View Summary clicked, assessmentId:', assessmentId);
+            if (assessmentId) {
+                window.location.href = `/summary/${assessmentId}`;
             } else {
-                alert('Summary not available - assessment ID missing');
+                alert('Summary not available - assessment ID missing: ' + assessmentId);
             }
         });
 
