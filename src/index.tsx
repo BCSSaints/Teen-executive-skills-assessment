@@ -363,7 +363,41 @@ app.post('/api/submit-assessment', async (c) => {
     
     const emailResult = await sendAssessmentReport(emailData, env.RESEND_API_KEY)
     
-    // Log email attempt
+    // Google Sheets synchronization
+    const { initializeGoogleSheetsSync, convertToSheetFormat } = await import('./google-sheets-service')
+    
+    let sheetsResult = { success: false, error: 'Not configured' }
+    const sheetsSync = initializeGoogleSheetsSync(env)
+    
+    if (sheetsSync) {
+      console.log('Google Sheets sync configuration:', { 
+        hasApiKey: !!env.GOOGLE_SHEETS_API_KEY, 
+        hasSpreadsheetId: !!env.GOOGLE_SHEETS_ID 
+      })
+      
+      try {
+        const sheetData = convertToSheetFormat(
+          studentInfo,
+          responses,
+          categoryScores,
+          analysis,
+          currentTime
+        )
+        
+        sheetsResult = await sheetsSync.syncAssessmentData(sheetData)
+        console.log('Google Sheets sync result:', sheetsResult)
+      } catch (error) {
+        console.error('Google Sheets sync error:', error)
+        sheetsResult = { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        }
+      }
+    } else {
+      console.log('Google Sheets sync not configured - missing API key or spreadsheet ID')
+    }
+    
+    // Log email attempt and sheets sync
     if (env.DB && assessmentId) {
       await env.DB.prepare(`
         INSERT INTO email_logs (assessment_id, recipient_email, subject, status, error_message)
@@ -374,6 +408,18 @@ app.post('/api/submit-assessment', async (c) => {
         `Executive Skills Assessment Results - ${studentInfo.name}`,
         emailResult.success ? 'success' : 'error',
         emailResult.error || null
+      ).run()
+      
+      // Log Google Sheets sync attempt
+      await env.DB.prepare(`
+        INSERT INTO email_logs (assessment_id, recipient_email, subject, status, error_message)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        assessmentId,
+        'Google Sheets Sync',
+        `Google Sheets Sync - ${studentInfo.name}`,
+        sheetsResult.success ? 'success' : 'error',
+        sheetsResult.error || null
       ).run()
     }
 
@@ -394,11 +440,77 @@ app.post('/api/submit-assessment', async (c) => {
       assessmentId,
       emailSent: emailResult.success,
       emailError: emailResult.error,
-      emailConfigured: !!env.RESEND_API_KEY
+      emailConfigured: !!env.RESEND_API_KEY,
+      sheetsSynced: sheetsResult.success,
+      sheetsError: sheetsResult.error,
+      sheetsConfigured: !!env.GOOGLE_SHEETS_API_KEY && !!env.GOOGLE_SHEETS_ID
     })
   } catch (error) {
     console.error('Error submitting assessment:', error)
     return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// Google Sheets test endpoint for debugging
+app.get('/api/test-sheets', async (c) => {
+  try {
+    const { env } = c
+    
+    if (!env.GOOGLE_SHEETS_API_KEY || !env.GOOGLE_SHEETS_ID) {
+      return c.json({ 
+        error: 'Google Sheets not configured',
+        configured: false,
+        hasApiKey: !!env.GOOGLE_SHEETS_API_KEY,
+        hasSpreadsheetId: !!env.GOOGLE_SHEETS_ID,
+        setupInstructions: {
+          step1: 'Get Google Sheets API key from Google Cloud Console',
+          step2: 'Create a new Google Sheet for assessment results',
+          step3: 'Add GOOGLE_SHEETS_API_KEY and GOOGLE_SHEETS_ID as Cloudflare secrets',
+          step4: 'Make sure the Google Sheet is publicly readable or shared with the service account'
+        }
+      })
+    }
+    
+    const { initializeGoogleSheetsSync, convertToSheetFormat } = await import('./google-sheets-service')
+    const sheetsSync = initializeGoogleSheetsSync(env)
+    
+    // Create test data
+    const testData = convertToSheetFormat(
+      { name: 'Test Student', email: 'test@example.com', gradeLevel: '9th', school: 'BCS Saints Test' },
+      { 1: 3, 2: 4, 3: 5, 4: 3, 5: 4, 6: 5, 7: 3, 8: 4, 9: 5, 10: 3, 11: 4, 12: 5, 13: 3, 14: 4, 15: 5, 16: 3, 17: 4, 18: 5, 19: 3, 20: 4, 21: 5, 22: 3, 23: 4, 24: 5, 25: 3, 26: 4, 27: 5, 28: 3, 29: 4, 30: 5, 31: 3, 32: 4, 33: 5 },
+      { response_inhibition: 12, working_memory: 13, emotional_control: 15, flexibility: 12, sustained_attention: 13, task_initiation: 15, planning_prioritizing: 12, organization: 13, time_management: 15, goal_directed_persistence: 12, metacognition: 13 },
+      { strengths: ['Response Inhibition', 'Flexibility'], weaknesses: ['Emotional Control', 'Task Initiation', 'Time Management'] },
+      new Date().toISOString()
+    )
+    
+    if (sheetsSync) {
+      const result = await sheetsSync.syncAssessmentData(testData)
+      
+      return c.json({
+        success: result.success,
+        error: result.error,
+        configured: true,
+        spreadsheetUrl: sheetsSync.getSpreadsheetUrl(),
+        testData: {
+          studentName: testData.studentName,
+          categoryCount: 11,
+          overallScore: testData.overallScore,
+          strengths: testData.strengths,
+          weaknesses: testData.weaknesses
+        }
+      })
+    } else {
+      return c.json({
+        error: 'Failed to initialize Google Sheets sync',
+        configured: false
+      })
+    }
+    
+  } catch (error) {
+    return c.json({
+      error: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      configured: true
+    })
   }
 })
 
