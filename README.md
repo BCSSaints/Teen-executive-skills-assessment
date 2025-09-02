@@ -9,8 +9,9 @@
 - **Organization**: BCS Saints Classical Christian School
 
 ## 🌐 Production URLs
-- **Live Assessment**: https://129594fc.executive-skills-assessment.pages.dev
-- **Email Test Endpoint**: https://129594fc.executive-skills-assessment.pages.dev/api/test-email
+- **🎯 STABLE ASSESSMENT URL**: https://executive-skills-assessment.pages.dev
+- **Google Sheets Test**: https://executive-skills-assessment.pages.dev/api/test-sheets  
+- **Email Test**: https://executive-skills-assessment.pages.dev/api/test-email
 - **Cloudflare Project**: executive-skills-assessment
 
 ## ✅ Current Features
