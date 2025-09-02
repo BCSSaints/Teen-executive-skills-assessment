@@ -363,20 +363,20 @@ app.post('/api/submit-assessment', async (c) => {
     
     const emailResult = await sendAssessmentReport(emailData, env.RESEND_API_KEY)
     
-    // Google Sheets synchronization
-    const { initializeGoogleSheetsSync, convertToSheetFormat } = await import('./google-sheets-service')
+    // Google Sheets synchronization via webhook
+    const { initializeGoogleSheetsWebhook, convertToWebhookFormat, sendToGoogleSheets } = await import('./google-sheets-webhook')
     
     let sheetsResult = { success: false, error: 'Not configured' }
-    const sheetsSync = initializeGoogleSheetsSync(env)
+    const webhookUrl = initializeGoogleSheetsWebhook(env)
     
-    if (sheetsSync) {
-      console.log('Google Sheets sync configuration:', { 
-        hasApiKey: !!env.GOOGLE_SHEETS_API_KEY, 
-        hasSpreadsheetId: !!env.GOOGLE_SHEETS_ID 
+    if (webhookUrl) {
+      console.log('Google Sheets webhook configuration:', { 
+        hasWebhookUrl: !!env.GOOGLE_SHEETS_WEBHOOK_URL,
+        webhookUrlLength: env.GOOGLE_SHEETS_WEBHOOK_URL?.length || 0
       })
       
       try {
-        const sheetData = convertToSheetFormat(
+        const webhookData = convertToWebhookFormat(
           studentInfo,
           responses,
           categoryScores,
@@ -384,17 +384,17 @@ app.post('/api/submit-assessment', async (c) => {
           currentTime
         )
         
-        sheetsResult = await sheetsSync.syncAssessmentData(sheetData)
-        console.log('Google Sheets sync result:', sheetsResult)
+        sheetsResult = await sendToGoogleSheets(webhookData, webhookUrl)
+        console.log('Google Sheets webhook result:', sheetsResult)
       } catch (error) {
-        console.error('Google Sheets sync error:', error)
+        console.error('Google Sheets webhook error:', error)
         sheetsResult = { 
           success: false, 
           error: error instanceof Error ? error.message : 'Unknown error' 
         }
       }
     } else {
-      console.log('Google Sheets sync not configured - missing API key or spreadsheet ID')
+      console.log('Google Sheets webhook not configured - missing GOOGLE_SHEETS_WEBHOOK_URL')
     }
     
     // Log email attempt and sheets sync
@@ -443,7 +443,7 @@ app.post('/api/submit-assessment', async (c) => {
       emailConfigured: !!env.RESEND_API_KEY,
       sheetsSynced: sheetsResult.success,
       sheetsError: sheetsResult.error,
-      sheetsConfigured: !!env.GOOGLE_SHEETS_API_KEY && !!env.GOOGLE_SHEETS_ID
+      sheetsConfigured: !!env.GOOGLE_SHEETS_WEBHOOK_URL
     })
   } catch (error) {
     console.error('Error submitting assessment:', error)
@@ -451,46 +451,48 @@ app.post('/api/submit-assessment', async (c) => {
   }
 })
 
-// Google Sheets test endpoint for debugging
+// Google Sheets webhook test endpoint
 app.get('/api/test-sheets', async (c) => {
   try {
     const { env } = c
     
-    if (!env.GOOGLE_SHEETS_API_KEY || !env.GOOGLE_SHEETS_ID) {
+    if (!env.GOOGLE_SHEETS_WEBHOOK_URL) {
       return c.json({ 
-        error: 'Google Sheets not configured',
+        error: 'Google Sheets webhook not configured',
         configured: false,
-        hasApiKey: !!env.GOOGLE_SHEETS_API_KEY,
-        hasSpreadsheetId: !!env.GOOGLE_SHEETS_ID,
+        hasWebhookUrl: false,
         setupInstructions: {
-          step1: 'Get Google Sheets API key from Google Cloud Console',
-          step2: 'Create a new Google Sheet for assessment results',
-          step3: 'Add GOOGLE_SHEETS_API_KEY and GOOGLE_SHEETS_ID as Cloudflare secrets',
-          step4: 'Make sure the Google Sheet is publicly readable or shared with the service account'
+          step1: 'Go to script.google.com and create new project',
+          step2: 'Copy the Google Apps Script code from google-apps-script-webhook.js',
+          step3: 'Update SPREADSHEET_ID in the script with your Google Sheets ID',
+          step4: 'Deploy as web app with "Anyone" access',
+          step5: 'Add the web app URL as GOOGLE_SHEETS_WEBHOOK_URL secret',
+          codeFile: 'See google-apps-script-webhook.js in the project for complete setup code'
         }
       })
     }
     
-    const { initializeGoogleSheetsSync, convertToSheetFormat } = await import('./google-sheets-service')
-    const sheetsSync = initializeGoogleSheetsSync(env)
+    const { initializeGoogleSheetsWebhook, convertToWebhookFormat, sendToGoogleSheets } = await import('./google-sheets-webhook')
+    const webhookUrl = initializeGoogleSheetsWebhook(env)
     
     // Create test data
-    const testData = convertToSheetFormat(
-      { name: 'Test Student', email: 'test@example.com', gradeLevel: '9th', school: 'BCS Saints Test' },
+    const testData = convertToWebhookFormat(
+      { name: 'Test Student', email: 'test@bcssaints.org', gradeLevel: '9th', school: 'BCS Saints Test' },
       { 1: 3, 2: 4, 3: 5, 4: 3, 5: 4, 6: 5, 7: 3, 8: 4, 9: 5, 10: 3, 11: 4, 12: 5, 13: 3, 14: 4, 15: 5, 16: 3, 17: 4, 18: 5, 19: 3, 20: 4, 21: 5, 22: 3, 23: 4, 24: 5, 25: 3, 26: 4, 27: 5, 28: 3, 29: 4, 30: 5, 31: 3, 32: 4, 33: 5 },
       { response_inhibition: 12, working_memory: 13, emotional_control: 15, flexibility: 12, sustained_attention: 13, task_initiation: 15, planning_prioritizing: 12, organization: 13, time_management: 15, goal_directed_persistence: 12, metacognition: 13 },
-      { strengths: ['Response Inhibition', 'Flexibility'], weaknesses: ['Emotional Control', 'Task Initiation', 'Time Management'] },
+      { strengths: ['Response Inhibition', 'Flexibility', 'Planning/Prioritizing'], weaknesses: ['Emotional Control', 'Task Initiation', 'Time Management'] },
       new Date().toISOString()
     )
     
-    if (sheetsSync) {
-      const result = await sheetsSync.syncAssessmentData(testData)
+    if (webhookUrl) {
+      const result = await sendToGoogleSheets(testData, webhookUrl)
       
       return c.json({
         success: result.success,
         error: result.error,
         configured: true,
-        spreadsheetUrl: sheetsSync.getSpreadsheetUrl(),
+        webhookUrl: webhookUrl,
+        spreadsheetUrl: 'https://docs.google.com/spreadsheets/d/1xnFF9gPsx9KO51E6SkMOcqyDISCEr_nsD6UkPdCMbTI/edit',
         testData: {
           studentName: testData.studentName,
           categoryCount: 11,
@@ -501,7 +503,7 @@ app.get('/api/test-sheets', async (c) => {
       })
     } else {
       return c.json({
-        error: 'Failed to initialize Google Sheets sync',
+        error: 'Failed to initialize Google Sheets webhook',
         configured: false
       })
     }
